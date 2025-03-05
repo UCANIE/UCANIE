@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Multiple Exercise Image Maker</title>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    input, button {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 14px;
+    }
+    h3 { margin-bottom: 0.3rem; }
+    .section { margin-bottom: 1rem; border: 1px solid #ccc; padding: 0.5rem; }
+    #results a { display: block; margin-bottom: 0.3rem; }
+  </style>
+</head>
+<body>
+  <h3>운동 이미지 일괄 제작</h3>
+  <div class="section">
+    <input id="startID" type="text" placeholder="시작 운동 ID (예: 1000)" />
+    <input id="endID" type="text" placeholder="종료 운동 ID (예: 1003)" />
+    <button id="createRangeBtn">Create All</button>
+  </div>
+  <div id="results"></div>
+  
+  <script>
+    document.getElementById('createRangeBtn').onclick = () => {
+      const startID = document.getElementById('startID').value.trim();
+      const endID = document.getElementById('endID').value.trim();
+      if (!startID || !endID) {
+        alert("시작 운동 ID와 종료 운동 ID를 모두 입력하세요.");
+        return;
+      }
+      parent.postMessage({
+        pluginMessage: { type: 'createRange', startID, endID }
+      }, '*');
+    };
+
+    window.onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      if (msg && msg.type === 'exportMultipleComplete') {
+        const results = msg.results; // 배열: [{ id, base64 }, ...]
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = "<h3>다운로드 링크</h3>";
+        if (results.length === 0) {
+          resultsDiv.innerHTML += "<p>결과가 없습니다.</p>";
+          return;
+        }
+        results.forEach(item => {
+          const link = document.createElement('a');
+          link.href = "data:image/png;base64," + item.base64;
+          link.download = item.id + ".png";
+          link.innerText = `Download ${item.id}.png`;
+          resultsDiv.appendChild(link);
+        });
+      }
+    };
+  </script>
+</body>
+</html>
